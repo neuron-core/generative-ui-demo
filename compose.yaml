@@ -1,0 +1,28 @@
+services:
+    mysql:
+        image: mysql:8.4
+        ports:
+            - '${DB_PORT:-3306}:3306'
+        environment:
+            MYSQL_DATABASE: '${DB_DATABASE:-app_demo}'
+            MYSQL_USER: '${DB_USERNAME:-app_demo}'
+            MYSQL_PASSWORD: '${DB_PASSWORD:-secret}'
+            MYSQL_ROOT_PASSWORD: '${DB_PASSWORD:-secret}'
+        volumes:
+            - mysql-data:/var/lib/mysql
+        healthcheck:
+            test: ['CMD', 'mysqladmin', 'ping', '-p${DB_PASSWORD:-secret}']
+            retries: 10
+            timeout: 5s
+
+    redis:
+        image: redis:8-alpine
+        ports:
+            - '${REDIS_PORT:-6379}:6379'
+        healthcheck:
+            test: ['CMD', 'redis-cli', 'ping']
+            retries: 10
+            timeout: 5s
+
+volumes:
+    mysql-data:
