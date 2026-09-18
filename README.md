@@ -1,5 +1,7 @@
 # Generative UI with Neuron AI
 
+<video src="https://github.com/neuron-core/generative-ui-demo/raw/main/public/generative-ui.mp4" controls muted width="100%"></video>
+
 A demo of **Generative UI**: a Business Intelligence chat where the AI agent doesn't just reply with text, it decides which UI components to render — KPI cards, charts and tables — based on the data it pulls from the database.
 
 Ask something like *"How did revenue go in the last 6 months?"* and the agent inspects the schema, runs read-only SQL queries against a sample ecommerce database, and answers with live Vue components streamed into the conversation.
