@@ -1,6 +1,10 @@
 # Generative UI with Neuron AI
 
-<video src="https://github.com/neuron-core/generative-ui-demo/raw/main/public/generative-ui.mp4" controls muted width="100%"></video>
+
+
+https://github.com/user-attachments/assets/15cda347-5094-44a0-959c-73e85e22b85d
+
+
 
 A demo of **Generative UI**: a Business Intelligence chat where the AI agent doesn't just reply with text, it decides which UI components to render — KPI cards, charts and tables — based on the data it pulls from the database.
 
