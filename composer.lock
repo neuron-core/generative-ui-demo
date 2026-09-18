@@ -2887,12 +2887,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/neuron-core/neuron-ai.git",
-                "reference": "266a8ff2b24936d0cdcbc3840bf00c61b932a755"
+                "reference": "ea23577bbfef47ff5a3209f85dc9a90a2dd9480e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/neuron-core/neuron-ai/zipball/266a8ff2b24936d0cdcbc3840bf00c61b932a755",
-                "reference": "266a8ff2b24936d0cdcbc3840bf00c61b932a755",
+                "url": "https://api.github.com/repos/neuron-core/neuron-ai/zipball/ea23577bbfef47ff5a3209f85dc9a90a2dd9480e",
+                "reference": "ea23577bbfef47ff5a3209f85dc9a90a2dd9480e",
                 "shasum": ""
             },
             "require": {
@@ -2993,7 +2993,7 @@
                     "url": "https://github.com/neuron-core"
                 }
             ],
-            "time": "2026-09-18T11:11:10+00:00"
+            "time": "2026-09-18T16:47:09+00:00"
         },
         {
             "name": "nikic/php-parser",

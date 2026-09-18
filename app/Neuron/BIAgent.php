@@ -16,9 +16,12 @@ use NeuronAI\Chat\History\EloquentChatHistory;
 use NeuronAI\Providers\AIProviderInterface;
 use NeuronAI\Providers\Anthropic\Anthropic;
 use NeuronAI\Providers\OpenAI\OpenAI;
+use NeuronAI\Tools\ToolInterface;
 use NeuronAI\Tools\Toolkits\MySQL\MySQLSchemaTool;
 use NeuronAI\Tools\Toolkits\MySQL\MySQLToolkit;
 use NeuronAI\Tools\Toolkits\MySQL\MySQLWriteTool;
+use NeuronAI\Workflow\Persistence\DatabasePersistence;
+use NeuronAI\Workflow\Persistence\PersistenceInterface;
 
 class BIAgent extends Agent
 {
@@ -59,6 +62,7 @@ class BIAgent extends Agent
             steps: [
                 'Retrieve the database schema before writing the first query of a conversation.',
                 'Run the read-only SQL queries needed to answer the question. Aggregate in SQL and keep result sets small.',
+                'Change data only when the user explicitly asks for it. Write queries are submitted to the user for approval before they run.',
                 'Present the result with the most appropriate render tools, then add a short comment.',
             ],
             output: [
@@ -78,12 +82,20 @@ class BIAgent extends Agent
 
         return [
             MySQLToolkit::make($pdo)
-                ->exclude([MySQLWriteTool::class])
+                ->with(MySQLWriteTool::class, fn (MySQLWriteTool $tool): ToolInterface => $tool->requireApproval())
                 ->with(MySQLSchemaTool::class, fn (): MySQLSchemaTool => DatabaseSchemaTool::make($pdo, self::TABLES)),
             RenderCardsTool::make(),
             RenderChartTool::make(),
             RenderTableTool::make(),
         ];
+    }
+
+    /**
+     * A run suspended for a tool approval is continued by a later request, so its records must be durable.
+     */
+    protected function persistence(): PersistenceInterface
+    {
+        return new DatabasePersistence(DB::connection()->getPdo());
     }
 
     protected function chatHistory(): ChatHistoryInterface

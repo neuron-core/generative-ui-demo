@@ -8,6 +8,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
 use NeuronAI\Agent\Adapters\AGUIAdapter;
+use NeuronAI\Agent\Frontend\AGUIInputTranslator;
 use NeuronAI\Chat\Messages\UserMessage;
 use NeuronAI\Workflow\Streaming\Channel\RedisChannel;
 use Redis;
@@ -24,6 +25,7 @@ class RunBIAgent implements ShouldQueue
     /**
      * @param  list<array<string, mixed>>  $messages  The AG-UI messages currently displayed by the frontend
      * @param  array<string, mixed>  $state
+     * @param  list<array<string, mixed>>  $resume  The approval decisions continuing a suspended run, empty on a new turn
      */
     public function __construct(
         public string $threadId,
@@ -31,6 +33,7 @@ class RunBIAgent implements ShouldQueue
         public string $prompt,
         public array $messages = [],
         public array $state = [],
+        public array $resume = [],
     ) {}
 
     /**
@@ -38,7 +41,7 @@ class RunBIAgent implements ShouldQueue
      */
     public function handle(): void
     {
-        Log::debug("AI Agent Running In a Background Job!");
+        Log::debug('AI Agent Running In a Background Job!');
 
         $redis = RedisStream::connect();
         $channel = RedisStream::channel($this->threadId, $this->runId);
@@ -46,10 +49,17 @@ class RunBIAgent implements ShouldQueue
         $this->waitForSubscriber($redis, $channel);
 
         // With both an adapter and a channel the agent streams eagerly to the channel and returns the final state.
-        BIAgent::make(threadId: $this->threadId)
+        $agent = BIAgent::make(threadId: $this->threadId)
             ->setStreamAdapter(new AGUIAdapter($this->threadId, $this->runId, $this->messages, $this->state))
-            ->setChannel(new RedisChannel($redis, $channel))
-            ->stream(new UserMessage($this->prompt));
+            ->setChannel(new RedisChannel($redis, $channel));
+
+        if ($this->resume !== []) {
+            $agent->submitInputs(['messages' => $this->messages, 'resume' => $this->resume], new AGUIInputTranslator)->events();
+
+            return;
+        }
+
+        $agent->stream(new UserMessage($this->prompt));
     }
 
     /**

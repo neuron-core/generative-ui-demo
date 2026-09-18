@@ -32,7 +32,32 @@ class RunAgentRequest extends FormRequest
             'messages' => ['required', 'array'],
             'messages.*.id' => ['required', 'string'],
             'state' => ['nullable', 'array'],
+            'resume' => ['nullable', 'array'],
         ];
+    }
+
+    /**
+     * The AG-UI messages displayed by the frontend. Laravel converts empty strings to null, while the
+     * protocol requires a string content: the agent sends these messages back in its snapshots.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function messages(): array
+    {
+        return array_values(array_map(
+            fn (array $message): array => array_key_exists('content', $message) && $message['content'] === null
+                ? [...$message, 'content' => '']
+                : $message,
+            $this->array('messages'),
+        ));
+    }
+
+    /**
+     * Approval decisions continue the suspended run instead of starting a new turn.
+     */
+    public function isContinuation(): bool
+    {
+        return $this->array('resume') !== [];
     }
 
     /**

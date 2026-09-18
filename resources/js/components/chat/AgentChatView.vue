@@ -1,16 +1,26 @@
 <script setup lang="ts">
-import { CopilotChat, useConfigureSuggestions } from '@copilotkit/vue/v2';
-import type { CopilotChatLabels } from '@copilotkit/vue/v2';
+import {
+    CopilotChat,
+    buildResumeArray,
+    useAgent,
+    useConfigureSuggestions,
+    useCopilotKit,
+    useInterrupt,
+} from '@copilotkit/vue/v2';
+import type { CopilotChatLabels, Interrupt } from '@copilotkit/vue/v2';
+import { computed, onMounted, shallowRef } from 'vue';
 import ChartCard from '@/components/chat/ChartCard.vue';
 import DataTable from '@/components/chat/DataTable.vue';
 import KpiCards from '@/components/chat/KpiCards.vue';
+import ToolApproval from '@/components/chat/ToolApproval.vue';
 import ToolStatus from '@/components/chat/ToolStatus.vue';
 
 type Props = {
     threadId: string;
+    pendingApprovals: Interrupt[];
 };
 
-defineProps<Props>();
+const props = defineProps<Props>();
 
 useConfigureSuggestions({
     suggestions: [
@@ -37,6 +47,66 @@ useConfigureSuggestions({
                 'Which products are out of stock or running low, and how well do they sell?',
         },
     ],
+});
+
+// A tool requiring approval suspends the run: the pending decisions are rendered by the "interrupt" slot.
+// The slot is typed with the first interrupt only, while a run can wait for several decisions at once.
+const { slotProps: liveApproval } = useInterrupt();
+
+const { copilotkit } = useCopilotKit();
+const { agent } = useAgent();
+
+// After a page reload no run has delivered the interrupts: they come from the chat history instead.
+const restoredApproval = shallowRef<{
+    interrupts: Interrupt[];
+    resolve: (payload?: unknown, interruptId?: string) => Promise<void>;
+} | null>(null);
+
+const approval = computed(() => liveApproval.value ?? restoredApproval.value);
+
+onMounted(() => {
+    if (props.pendingApprovals.length === 0) {
+        return;
+    }
+
+    const interrupts: Interrupt[] = JSON.parse(
+        JSON.stringify(props.pendingApprovals),
+    );
+    const responses: Parameters<typeof buildResumeArray>[1] = {};
+
+    const resolve = async (
+        payload?: unknown,
+        interruptId?: string,
+    ): Promise<void> => {
+        responses[interruptId ?? interrupts[0].id] = {
+            status: 'resolved',
+            payload,
+        };
+
+        if (!agent.value || interrupts.some(({ id }) => !(id in responses))) {
+            return;
+        }
+
+        restoredApproval.value = null;
+        copilotkit.value.setInterruptState(null);
+
+        await copilotkit.value.runAgent({
+            agent: agent.value,
+            resume: buildResumeArray(interrupts, responses),
+        });
+    };
+
+    restoredApproval.value = { interrupts, resolve };
+
+    // CopilotChat renders its "interrupt" slot only while an interrupt state is set.
+    copilotkit.value.setInterruptState({
+        event: { name: 'on_interrupt', value: interrupts[0] },
+        interrupt: interrupts[0],
+        interrupts,
+        result: null,
+        resolve,
+        cancel: async (): Promise<void> => {},
+    });
 });
 
 // The library types its labels as the literal default strings, hence the cast.
@@ -89,6 +159,21 @@ const labels = {
                 label="Querying the database"
                 :done="status === 'complete'"
                 :detail="args?.query"
+            />
+        </template>
+        <template #tool-call-mysql_write_query="{ args, status }">
+            <ToolStatus
+                label="Modifying the database"
+                :done="status === 'complete'"
+                :detail="args?.query"
+            />
+        </template>
+
+        <template #interrupt>
+            <ToolApproval
+                v-if="approval"
+                :interrupts="approval.interrupts"
+                :resolve="approval.resolve"
             />
         </template>
     </CopilotChat>

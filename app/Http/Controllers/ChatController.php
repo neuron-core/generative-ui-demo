@@ -13,11 +13,15 @@ use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 use NeuronAI\Agent\Adapters\AGUIAdapter;
+use NeuronAI\Agent\Frontend\AGUIInputTranslator;
 use NeuronAI\Chat\Messages\Message;
 use NeuronAI\Chat\Messages\ToolCallMessage;
 use NeuronAI\Chat\Messages\ToolResultMessage;
 use NeuronAI\Chat\Messages\UserMessage;
+use NeuronAI\Exceptions\InputTranslationException;
+use NeuronAI\Exceptions\WorkflowException;
 use NeuronAI\Tools\ToolCall;
+use NeuronAI\Workflow\Interrupt\Action;
 use NeuronAI\Workflow\Streaming\ProtocolEvent;
 use NeuronAI\Workflow\Streaming\SSEEncoder;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -32,11 +36,15 @@ class ChatController extends Controller
     {
         $threadId = $this->currentThreadId($request);
 
+        $agent = BIAgent::make(threadId: $threadId);
+        $messages = $agent->getChatHistory()->getMessages();
+        $pendingApprovals = $this->toAGUIInterrupts($agent->pendingApprovals());
+
         return Inertia::render('Chat', [
             'threadId' => $threadId,
-            'messages' => $this->toAGUIMessages(
-                BIAgent::make(threadId: $threadId)->getChatHistory()->getMessages()
-            ),
+            // Like in the live run, the tool call waiting for approval is shown by the approval card only.
+            'messages' => $this->toAGUIMessages($pendingApprovals === [] ? $messages : array_slice($messages, 0, -1)),
+            'pendingApprovals' => $pendingApprovals,
         ]);
     }
 
@@ -55,21 +63,33 @@ class ChatController extends Controller
      */
     public function stream(RunAgentRequest $request): StreamedResponse
     {
-        Log::debug("AI Agent Running In The HTTP Request Lifecycle!");
+        Log::debug('AI Agent Running In The HTTP Request Lifecycle!');
 
         $adapter = new AGUIAdapter(
             $request->string('threadId')->toString(),
             $request->string('runId')->toString(),
-            array_values($request->array('messages')),
+            $request->messages(),
             $request->array('state'),
         );
 
         $agent = BIAgent::make(threadId: $request->string('threadId')->toString())->setStreamAdapter($adapter);
+
+        // The decisions are validated here, before the first frame, so a stale or malformed answer is a plain HTTP error.
+        if ($request->isContinuation()) {
+            try {
+                $agent->submitInputs($request->all(), new AGUIInputTranslator);
+            } catch (InputTranslationException $exception) {
+                abort(400, $exception->getMessage());
+            } catch (WorkflowException $exception) {
+                abort(409, $exception->getMessage());
+            }
+        }
+
         $message = new UserMessage($request->prompt());
 
-        return response()->stream(function () use ($agent, $adapter, $message): void {
+        return response()->stream(function () use ($request, $agent, $adapter, $message): void {
             try {
-                $events = $agent->stream($message);
+                $events = $request->isContinuation() ? $agent->events() : $agent->stream($message);
 
                 foreach ($events instanceof Generator ? $events : [] as $event) {
                     if ($event instanceof ProtocolEvent) {
@@ -121,6 +141,23 @@ class ChatController extends Controller
     protected function newThreadId(Request $request): string
     {
         return "user-{$request->user()->id}-".Str::uuid();
+    }
+
+    /**
+     * Convert the approvals a suspended run is waiting for to AG-UI "confirmation" interrupts,
+     * the same the stream adapter sends when the run is suspended.
+     *
+     * @param  Action[]  $actions
+     * @return list<array{id: string, reason: string, message: string, metadata: array<string, mixed>}>
+     */
+    protected function toAGUIInterrupts(array $actions): array
+    {
+        return array_map(fn (Action $action): array => [
+            'id' => $action->id,
+            'reason' => 'confirmation',
+            'message' => $action->reason ?? 'This tool call requires approval before execution',
+            'metadata' => $action->jsonSerialize(),
+        ], $actions);
     }
 
     /**

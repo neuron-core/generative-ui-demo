@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Message } from '@copilotkit/vue/v2';
+import type { Interrupt, Message } from '@copilotkit/vue/v2';
 import { Head, router } from '@inertiajs/vue3';
 import { SquarePen } from '@lucide/vue';
 import AgentChat from '@/components/chat/AgentChat.vue';
@@ -10,6 +10,7 @@ import { store, stream } from '@/routes/chat';
 type Props = {
     threadId: string;
     messages: Message[];
+    pendingApprovals: Interrupt[];
 };
 
 defineProps<Props>();
@@ -45,6 +46,7 @@ defineOptions({
             :url="stream.url()"
             :thread-id="threadId"
             :messages="messages"
+            :pending-approvals="pendingApprovals"
         />
     </div>
 </template>
