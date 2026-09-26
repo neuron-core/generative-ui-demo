@@ -72,7 +72,8 @@ class ChatController extends Controller
             $request->array('state'),
         );
 
-        $agent = BIAgent::make(threadId: $request->string('threadId')->toString())->setStreamAdapter($adapter);
+        $agent = BIAgent::make(threadId: $request->string('threadId')->toString())
+            ->setStreamAdapter($adapter);
 
         // The decisions are validated here, before the first frame, so a stale or malformed answer is a plain HTTP error.
         if ($request->isContinuation()) {
