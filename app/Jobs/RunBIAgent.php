@@ -49,9 +49,9 @@ class RunBIAgent implements ShouldQueue
         $this->waitForSubscriber($redis, $channel);
 
         // With both an adapter and a channel the agent streams eagerly to the channel and returns the final state.
-        $agent = BIAgent::make(threadId: $this->threadId)
-            ->setStreamAdapter(new AGUIAdapter($this->threadId, $this->runId, $this->messages, $this->state))
-            ->setChannel(new RedisChannel($redis, $channel));
+        $agent = BIAgent::make(workflowId: $this->threadId)
+            ->setStreamAdapter(fn (): AGUIAdapter => new AGUIAdapter($this->threadId, $this->runId, $this->messages, $this->state))
+            ->setChannel(fn (): RedisChannel => new RedisChannel($redis, $channel));
 
         if ($this->resume !== []) {
             $agent->submitInputs(['messages' => $this->messages, 'resume' => $this->resume], new AGUIInputTranslator)->events();

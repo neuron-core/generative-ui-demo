@@ -11,8 +11,9 @@ use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 use NeuronAI\Agent\Agent;
 use NeuronAI\Agent\SystemPrompt;
-use NeuronAI\Chat\History\ChatHistoryInterface;
-use NeuronAI\Chat\History\EloquentChatHistory;
+use NeuronAI\Chat\History\EloquentMessageStore;
+use NeuronAI\Chat\History\MessageStoreInterface;
+use NeuronAI\Chat\Messages\Message;
 use NeuronAI\Providers\AIProviderInterface;
 use NeuronAI\Providers\Anthropic\Anthropic;
 use NeuronAI\Providers\OpenAI\OpenAI;
@@ -98,11 +99,23 @@ class BIAgent extends Agent
         return new DatabasePersistence(DB::connection()->getPdo());
     }
 
-    protected function chatHistory(): ChatHistoryInterface
+    protected function messageStore(): MessageStoreInterface
     {
-        return new EloquentChatHistory(
-            modelClass: ChatMessage::class,
-            contextWindow: 150000,
-        );
+        return new EloquentMessageStore(ChatMessage::class);
+    }
+
+    protected function contextWindow(): int
+    {
+        return 150000;
+    }
+
+    /**
+     * The whole conversation of the thread, archived messages included, to render it after a page reload.
+     *
+     * @return Message[]
+     */
+    public function transcript(): array
+    {
+        return $this->resolveMessageStore()->loadAll((string) $this->getThreadId());
     }
 }
