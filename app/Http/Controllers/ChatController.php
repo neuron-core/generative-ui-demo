@@ -68,22 +68,26 @@ class ChatController extends Controller
         $agent = BIAgent::make(workflowId: $request->string('threadId')->toString())
             ->setStreamAdapter(fn (): AGUIAdapter => $adapter);
 
-        // The decisions are validated here, before the first frame, so a stale or malformed answer is a plain HTTP error.
-        if ($request->isContinuation()) {
-            try {
-                $agent->submitInputs($request->all(), new AGUIInputTranslator);
-            } catch (InputTranslationException $exception) {
-                abort(400, $exception->getMessage());
-            } catch (WorkflowException $exception) {
-                abort(409, $exception->getMessage());
+        // Tools and answers are validated here, before the first frame, so a stale or malformed request is a plain HTTP error.
+        $continuation = null;
+
+        try {
+            $agent->addFrontendTools($request->frontendTools());
+
+            if ($request->isContinuation()) {
+                $continuation = $agent->submitInputs([...$request->all(), 'messages' => $request->messages()], new AGUIInputTranslator);
             }
+        } catch (InputTranslationException $exception) {
+            abort(400, $exception->getMessage());
+        } catch (WorkflowException $exception) {
+            abort(409, $exception->getMessage());
         }
 
         $message = new UserMessage($request->prompt());
 
-        return response()->stream(function () use ($request, $agent, $adapter, $message): void {
+        return response()->stream(function () use ($continuation, $agent, $adapter, $message): void {
             try {
-                $events = $request->isContinuation() ? $agent->events() : $agent->stream($message);
+                $events = $continuation?->events() ?? $agent->stream($message);
 
                 foreach ($events instanceof Generator ? $events : [] as $event) {
                     if ($event instanceof ProtocolEvent) {

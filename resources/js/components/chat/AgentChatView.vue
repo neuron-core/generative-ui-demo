@@ -14,6 +14,7 @@ import DataTable from '@/components/chat/DataTable.vue';
 import KpiCards from '@/components/chat/KpiCards.vue';
 import ToolApproval from '@/components/chat/ToolApproval.vue';
 import ToolStatus from '@/components/chat/ToolStatus.vue';
+import { renderToolResult, useRenderTools } from '@/composables/useRenderTools';
 
 type Props = {
     threadId: string;
@@ -21,6 +22,8 @@ type Props = {
 };
 
 const props = defineProps<Props>();
+
+useRenderTools();
 
 useConfigureSuggestions({
     suggestions: [
@@ -64,6 +67,37 @@ const restoredApproval = shallowRef<{
 
 const approval = computed(() => liveApproval.value ?? restoredApproval.value);
 
+type PendingToolCall = {
+    callId: string;
+    name: string;
+    inputs: Record<string, unknown>;
+};
+
+/**
+ * A reload discards the render tool calls the browser was running: run them again and deliver their results.
+ */
+async function resumeFrontendWait(interrupt: Interrupt): Promise<void> {
+    if (!agent.value) {
+        return;
+    }
+
+    const toolCalls = (interrupt.metadata?.toolCalls ??
+        []) as PendingToolCall[];
+    const results = Object.fromEntries(
+        toolCalls.map(({ callId, name, inputs }) => [
+            callId,
+            { result: renderToolResult(name, inputs) },
+        ]),
+    );
+
+    await copilotkit.value.runAgent({
+        agent: agent.value,
+        resume: [
+            { interruptId: interrupt.id, status: 'resolved', payload: results },
+        ],
+    });
+}
+
 onMounted(() => {
     if (props.pendingApprovals.length === 0) {
         return;
@@ -72,6 +106,12 @@ onMounted(() => {
     const interrupts: Interrupt[] = JSON.parse(
         JSON.stringify(props.pendingApprovals),
     );
+
+    if (interrupts[0].reason !== 'confirmation') {
+        void resumeFrontendWait(interrupts[0]);
+
+        return;
+    }
     const responses: Parameters<typeof buildResumeArray>[1] = {};
 
     const resolve = async (

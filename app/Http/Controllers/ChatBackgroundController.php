@@ -13,6 +13,7 @@ use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 use NeuronAI\Agent\Adapters\AGUIAdapter;
+use NeuronAI\Exceptions\InputTranslationException;
 use NeuronAI\Workflow\Streaming\ProtocolEvent;
 use NeuronAI\Workflow\Streaming\SSEEncoder;
 use Redis;
@@ -56,6 +57,13 @@ class ChatBackgroundController extends Controller
         $threadId = $request->string('threadId')->toString();
         $runId = $request->string('runId')->toString();
 
+        // The frontend tools are validated here, so a malformed declaration is a plain HTTP error instead of a failed job.
+        try {
+            BIAgent::make(workflowId: $threadId)->addFrontendTools($request->frontendTools());
+        } catch (InputTranslationException $exception) {
+            abort(400, $exception->getMessage());
+        }
+
         $job = new RunBIAgent(
             $threadId,
             $runId,
@@ -63,6 +71,8 @@ class ChatBackgroundController extends Controller
             $request->messages(),
             $request->array('state'),
             array_values($request->array('resume')),
+            array_values($request->array('tools')),
+            $request->isContinuation(),
         );
 
         return response()->stream(function () use ($job, $threadId, $runId): void {

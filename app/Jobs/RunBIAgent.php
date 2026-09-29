@@ -25,7 +25,9 @@ class RunBIAgent implements ShouldQueue
     /**
      * @param  list<array<string, mixed>>  $messages  The AG-UI messages currently displayed by the frontend
      * @param  array<string, mixed>  $state
-     * @param  list<array<string, mixed>>  $resume  The approval decisions continuing a suspended run, empty on a new turn
+     * @param  list<array<string, mixed>>  $resume  The approval decisions continuing a suspended run
+     * @param  list<array<string, mixed>>  $tools  The AG-UI declarations of the tools the frontend executes
+     * @param  bool  $continuation  Whether approval decisions or frontend tool results continue a suspended run
      */
     public function __construct(
         public string $threadId,
@@ -34,6 +36,8 @@ class RunBIAgent implements ShouldQueue
         public array $messages = [],
         public array $state = [],
         public array $resume = [],
+        public array $tools = [],
+        public bool $continuation = false,
     ) {}
 
     /**
@@ -48,18 +52,24 @@ class RunBIAgent implements ShouldQueue
 
         $this->waitForSubscriber($redis, $channel);
 
-        // With both an adapter and a channel the agent streams eagerly to the channel and returns the final state.
+        // The events are delivered to the channel while they are consumed: stream() is lazy, run() consumes eagerly.
         $agent = BIAgent::make(workflowId: $this->threadId)
             ->setStreamAdapter(fn (): AGUIAdapter => new AGUIAdapter($this->threadId, $this->runId, $this->messages, $this->state))
-            ->setChannel(fn (): RedisChannel => new RedisChannel($redis, $channel));
+            ->setChannel(fn (): RedisChannel => new RedisChannel($redis, $channel))
+            ->addFrontendTools((new AGUIInputTranslator)->tools(['tools' => $this->tools]));
 
-        if ($this->resume !== []) {
-            $agent->submitInputs(['messages' => $this->messages, 'resume' => $this->resume], new AGUIInputTranslator)->events();
+        if ($this->continuation) {
+            // The translator reads any "resume" key as approval decisions, so frontend tool results must be sent without it.
+            $payload = $this->resume === [] ? ['messages' => $this->messages] : ['messages' => $this->messages, 'resume' => $this->resume];
+
+            $agent->submitInputs($payload, new AGUIInputTranslator)->run();
 
             return;
         }
 
-        $agent->stream(new UserMessage($this->prompt));
+        foreach ($agent->stream(new UserMessage($this->prompt)) as $event) {
+            // Draining the generator is what runs the agent and publishes each event on Redis.
+        }
     }
 
     /**

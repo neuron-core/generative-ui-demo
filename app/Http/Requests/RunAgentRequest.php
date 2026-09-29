@@ -5,6 +5,9 @@ namespace App\Http\Requests;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Arr;
+use NeuronAI\Agent\Frontend\AGUIInputTranslator;
+use NeuronAI\Exceptions\InputTranslationException;
+use NeuronAI\Tools\FrontendTool;
 
 /**
  * The AG-UI "RunAgentInput" payload sent by the CopilotKit chat.
@@ -33,6 +36,7 @@ class RunAgentRequest extends FormRequest
             'messages.*.id' => ['required', 'string'],
             'state' => ['nullable', 'array'],
             'resume' => ['nullable', 'array'],
+            'tools' => ['nullable', 'array'],
         ];
     }
 
@@ -53,11 +57,34 @@ class RunAgentRequest extends FormRequest
     }
 
     /**
-     * Approval decisions continue the suspended run instead of starting a new turn.
+     * The tools the frontend executes itself, declared by the CopilotKit chat on every request.
+     *
+     * @return FrontendTool[]
+     *
+     * @throws InputTranslationException
+     */
+    public function frontendTools(): array
+    {
+        return (new AGUIInputTranslator)->tools($this->all());
+    }
+
+    /**
+     * Approval decisions and frontend tool results continue the suspended run instead of starting a new turn.
+     * CopilotKit inserts a tool result right after the assistant message that made the call, so it is not
+     * necessarily the last message: any tool result after the last user message answers the pending calls.
      */
     public function isContinuation(): bool
     {
-        return $this->array('resume') !== [];
+        if ($this->array('resume') !== []) {
+            return true;
+        }
+
+        $messages = $this->messages();
+        $lastUserIndex = Arr::last(array_keys($messages), fn (int $index): bool => ($messages[$index]['role'] ?? null) === 'user') ?? -1;
+
+        return collect($messages)
+            ->slice($lastUserIndex + 1)
+            ->contains(fn (array $message): bool => ($message['role'] ?? null) === 'tool');
     }
 
     /**
