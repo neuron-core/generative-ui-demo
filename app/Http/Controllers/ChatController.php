@@ -14,11 +14,13 @@ use Inertia\Inertia;
 use Inertia\Response;
 use NeuronAI\Agent\Adapters\AGUIAdapter;
 use NeuronAI\Agent\Frontend\AGUIInputTranslator;
+use NeuronAI\Chat\History\MessageStoreInterface;
 use NeuronAI\Chat\Messages\UserMessage;
 use NeuronAI\Exceptions\InputTranslationException;
 use NeuronAI\Exceptions\WorkflowException;
 use NeuronAI\Workflow\Streaming\ProtocolEvent;
 use NeuronAI\Workflow\Streaming\SSEEncoder;
+use NeuronAI\Workflow\WorkflowEngine;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Throwable;
 
@@ -27,12 +29,12 @@ class ChatController extends Controller
     /**
      * Show the chat page, restoring the messages of the current conversation.
      */
-    public function show(Request $request): Response
+    public function show(Request $request, MessageStoreInterface $messageStore, WorkflowEngine $workflowEngine): Response
     {
         $threadId = $this->currentThreadId($request);
 
-        $agent = BIAgent::make(workflowId: $threadId);
-        $page = (new AGUIAdapter($threadId))->hydrate($agent->transcript(), $agent->inspect());
+        // The whole conversation, archived messages included, and the pending interruption of the thread's run.
+        $page = (new AGUIAdapter($threadId))->hydrate($messageStore->loadAll($threadId), $workflowEngine->inspect($threadId));
 
         return Inertia::render('Chat', [
             'threadId' => $threadId,

@@ -2,15 +2,12 @@
 
 namespace App\Neuron;
 
-use App\Models\ChatMessage;
 use App\Neuron\Tools\DatabaseSchemaTool;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 use NeuronAI\Agent\Agent;
 use NeuronAI\Agent\SystemPrompt;
-use NeuronAI\Chat\History\EloquentMessageStore;
 use NeuronAI\Chat\History\MessageStoreInterface;
-use NeuronAI\Chat\Messages\Message;
 use NeuronAI\Exceptions\InputTranslationException;
 use NeuronAI\Providers\AIProviderInterface;
 use NeuronAI\Providers\Anthropic\Anthropic;
@@ -21,7 +18,6 @@ use NeuronAI\Tools\Toolkits\MySQL\MySQLSchemaTool;
 use NeuronAI\Tools\Toolkits\MySQL\MySQLToolkit;
 use NeuronAI\Tools\Toolkits\MySQL\MySQLWriteTool;
 use NeuronAI\Tools\Toolkits\ToolkitInterface;
-use NeuronAI\Workflow\Persistence\DatabasePersistence;
 use NeuronAI\Workflow\Persistence\PersistenceInterface;
 
 class BIAgent extends Agent
@@ -115,26 +111,16 @@ class BIAgent extends Agent
      */
     protected function persistence(): PersistenceInterface
     {
-        return new DatabasePersistence(DB::connection()->getPdo());
+        return app(PersistenceInterface::class);
     }
 
     protected function messageStore(): MessageStoreInterface
     {
-        return new EloquentMessageStore(ChatMessage::class);
+        return app(MessageStoreInterface::class);
     }
 
     protected function contextWindow(): int
     {
         return 150000;
-    }
-
-    /**
-     * The whole conversation of the thread, archived messages included, to render it after a page reload.
-     *
-     * @return Message[]
-     */
-    public function transcript(): array
-    {
-        return $this->resolveMessageStore()->loadAll((string) $this->getThreadId());
     }
 }
