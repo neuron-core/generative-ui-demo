@@ -67,9 +67,7 @@ class RunBIAgent implements ShouldQueue
             return;
         }
 
-        foreach ($agent->stream(new UserMessage($this->prompt)) as $event) {
-            // Draining the generator is what runs the agent and publishes each event on Redis.
-        }
+        $agent->chat(new UserMessage($this->prompt), true);
     }
 
     /**
