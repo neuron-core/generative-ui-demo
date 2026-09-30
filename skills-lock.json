@@ -4,7 +4,7 @@
     "neuron-agent": {
       "source": "/home/ilvalerione/code/generative-ui-demo/vendor/neuron-core/neuron-ai/skills",
       "sourceType": "local",
-      "computedHash": "5b3ba5f4d1fd821bf8906b67d2fb7d1c5059794bf67b1167eda9768e5ee7e08d"
+      "computedHash": "afd31088a9cc6d0b9505fec18086b86de0c1b5d481506c6c77cd1d497fdadffe"
     },
     "neuron-agent-builder": {
       "source": "/home/ilvalerione/code/app-demo/vendor/neuron-core/neuron-ai/skills",
@@ -49,7 +49,7 @@
     "neuron-streaming": {
       "source": "/home/ilvalerione/code/generative-ui-demo/vendor/neuron-core/neuron-ai/skills",
       "sourceType": "local",
-      "computedHash": "d31e953f43f184af5cef818bbacd629f48c5e3b7a2d8e074e3a18a3662cb716c"
+      "computedHash": "fccd6e03649b4bbe80381b14238fb213b50d27b8eaf2c2123f9bbce0075e1d7e"
     },
     "neuron-structured-output": {
       "source": "/home/ilvalerione/code/generative-ui-demo/vendor/neuron-core/neuron-ai/skills",
