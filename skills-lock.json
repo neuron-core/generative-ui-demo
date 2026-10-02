@@ -4,67 +4,52 @@
     "neuron-agent": {
       "source": "/home/ilvalerione/code/generative-ui-demo/vendor/neuron-core/neuron-ai/skills",
       "sourceType": "local",
-      "computedHash": "afd31088a9cc6d0b9505fec18086b86de0c1b5d481506c6c77cd1d497fdadffe"
-    },
-    "neuron-agent-builder": {
-      "source": "/home/ilvalerione/code/app-demo/vendor/neuron-core/neuron-ai/skills",
-      "sourceType": "local",
-      "computedHash": "0f59fc78df37e13e59557860336e657f12ebe6299f0677309919f87a23b9bc69"
-    },
-    "neuron-debugger": {
-      "source": "/home/ilvalerione/code/app-demo/vendor/neuron-core/neuron-ai/skills",
-      "sourceType": "local",
-      "computedHash": "e16f1fc7643c7a92c6eb4645d2f35e27c4256767849090d019d4c166c6d2a73e"
+      "computedHash": "b309aeec2381d961b2caafe09523ee1274536e710017a2cfe8e633ee3db0d6b4"
     },
     "neuron-evaluation": {
       "source": "/home/ilvalerione/code/generative-ui-demo/vendor/neuron-core/neuron-ai/skills",
       "sourceType": "local",
-      "computedHash": "fd9a469e64320e1baba6896a6094ef380b299f2e4e9709b5d8ddc9e73d429be9"
-    },
-    "neuron-evaluation-engineer": {
-      "source": "/home/ilvalerione/code/app-demo/vendor/neuron-core/neuron-ai/skills",
-      "sourceType": "local",
-      "computedHash": "e9961866d2a9344fd69dea65f6b61c1e3020f6eab1e99624c8c4cc2fca614f25"
+      "computedHash": "066f6d0ee593c650f3e1764f46a276a3cb1f30ac8dbe47b357a65d13b38be29e"
     },
     "neuron-frontend-integration": {
       "source": "/home/ilvalerione/code/generative-ui-demo/vendor/neuron-core/neuron-ai/skills",
       "sourceType": "local",
-      "computedHash": "b40bd41b7af4666a9980a230587c487dd3db14ab680d2095d4403b16b558790b"
+      "computedHash": "d6fc607d6c0345d0ecb88185f832ada61bd86fc77baf27970ca6033a9ab245a1"
+    },
+    "neuron-laravel-integration": {
+      "source": "/home/ilvalerione/code/generative-ui-demo/vendor/neuron-core/neuron-ai/skills",
+      "sourceType": "local",
+      "computedHash": "904d6829c0f987b0effe01ee248fb1c2e5f602e60c27a35bbaba8b494d043aa8"
     },
     "neuron-monitoring": {
       "source": "/home/ilvalerione/code/generative-ui-demo/vendor/neuron-core/neuron-ai/skills",
       "sourceType": "local",
-      "computedHash": "5ca5f1178b664a3972f609e0f0cf5b07a21ae668a642a8f5f0cc26f452ed9fed"
+      "computedHash": "eb11ca1f461c197c60c19e5dcf54d585970284bdf1d8bfc5990c4ed1c037a4be"
     },
     "neuron-rag": {
       "source": "/home/ilvalerione/code/generative-ui-demo/vendor/neuron-core/neuron-ai/skills",
       "sourceType": "local",
-      "computedHash": "d5e5d8235689a5f856b919670cbe543d8d060e1e4dcd3958212485cd48f368d8"
-    },
-    "neuron-rag-specialist": {
-      "source": "/home/ilvalerione/code/app-demo/vendor/neuron-core/neuron-ai/skills",
-      "sourceType": "local",
-      "computedHash": "090134674ffab7b1cc9dcad4bf0a57e52e6f5268e6f23fca7f0eee99a47d4737"
+      "computedHash": "a267279b76ee3cc915efec4afea39fa420ab5e386e42d75884da746ba12621e2"
     },
     "neuron-streaming": {
       "source": "/home/ilvalerione/code/generative-ui-demo/vendor/neuron-core/neuron-ai/skills",
       "sourceType": "local",
-      "computedHash": "fccd6e03649b4bbe80381b14238fb213b50d27b8eaf2c2123f9bbce0075e1d7e"
+      "computedHash": "19d7f85bb0b4ab5a14ea08ee8d7436f59e8dbc3639395ac1cdab6836187207f7"
     },
     "neuron-structured-output": {
       "source": "/home/ilvalerione/code/generative-ui-demo/vendor/neuron-core/neuron-ai/skills",
       "sourceType": "local",
-      "computedHash": "84448f3ccef521df081bd39c234b126f9e3dbecb4a48d02cfc883e8596584526"
+      "computedHash": "8e5f5030872f65618138a1551be3b6f3b20da456034eb16592a090c375705423"
+    },
+    "neuron-symfony-integration": {
+      "source": "/home/ilvalerione/code/generative-ui-demo/vendor/neuron-core/neuron-ai/skills",
+      "sourceType": "local",
+      "computedHash": "13a2ad7149f1f3b8256e5aeb1ad09517f40fb156e95a8a83dacf830b8acdeaac"
     },
     "neuron-test": {
       "source": "/home/ilvalerione/code/generative-ui-demo/vendor/neuron-core/neuron-ai/skills",
       "sourceType": "local",
-      "computedHash": "719f5f5e207b23d024e5b9094842c4018107db7b18a383d58da69d79a80f4dad"
-    },
-    "neuron-test-engineer": {
-      "source": "/home/ilvalerione/code/app-demo/vendor/neuron-core/neuron-ai/skills",
-      "sourceType": "local",
-      "computedHash": "bec5814b7bd6b99624a9facc109a2cafbd33a2900e1b1b81409b8de9fe08ddd0"
+      "computedHash": "46ff442aa8042e10a7b41b641e4ab63507a786062254ade84e71fc414c76a118"
     },
     "neuron-tool": {
       "source": "/home/ilvalerione/code/generative-ui-demo/vendor/neuron-core/neuron-ai/skills",
@@ -74,22 +59,12 @@
     "neuron-tool-approval": {
       "source": "/home/ilvalerione/code/generative-ui-demo/vendor/neuron-core/neuron-ai/skills",
       "sourceType": "local",
-      "computedHash": "5c586026716ca7dff2e6aaebd384c92c81e5859497732610cb263934469af015"
-    },
-    "neuron-tool-creator": {
-      "source": "/home/ilvalerione/code/app-demo/vendor/neuron-core/neuron-ai/skills",
-      "sourceType": "local",
-      "computedHash": "7d8144f006afb8337b25a2656a9021f5d1e72cbd8f79d096bcb7c2cbd3f4e472"
+      "computedHash": "77ecc00e0aacdef04b21d17cac00af74efb08e8cbeb0b6d4acd6fd8ff95ca3dd"
     },
     "neuron-workflow": {
       "source": "/home/ilvalerione/code/generative-ui-demo/vendor/neuron-core/neuron-ai/skills",
       "sourceType": "local",
-      "computedHash": "7a913ef77fd0d0ad55d85962fb4a9bffb0842db67fa67bc90626d0dd2241cc08"
-    },
-    "neuron-workflow-architect": {
-      "source": "/home/ilvalerione/code/app-demo/vendor/neuron-core/neuron-ai/skills",
-      "sourceType": "local",
-      "computedHash": "51e84416467d356ba2a6fe67545048696b50577600350c229527e5d9a7091c07"
+      "computedHash": "3d05aa51197fdbb932e51ba956c85665a4c09684c6742b1b0d852ae1464674dd"
     }
   }
 }

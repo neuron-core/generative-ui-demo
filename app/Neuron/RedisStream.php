@@ -10,10 +10,9 @@ use Redis;
 class RedisStream
 {
     /**
-     * A dedicated phpredis client: Neuron's RedisChannel publishes on it, the controller subscribes with it.
-     * A read timeout of -1 waits forever.
+     * A dedicated phpredis client: Neuron's RedisChannel publishes on it, its RedisChannelReader subscribes with it.
      */
-    public static function connect(float $readTimeout = -1): Redis
+    public static function connect(): Redis
     {
         $config = config('database.redis.default');
 
@@ -23,8 +22,6 @@ class RedisStream
         if (filled($config['password'] ?? null)) {
             $redis->auth($config['password']);
         }
-
-        $redis->setOption(Redis::OPT_READ_TIMEOUT, $readTimeout);
 
         return $redis;
     }

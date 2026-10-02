@@ -15,10 +15,10 @@ use Inertia\Response;
 use NeuronAI\Agent\Adapters\AGUIAdapter;
 use NeuronAI\Chat\History\MessageStoreInterface;
 use NeuronAI\Exceptions\InputTranslationException;
+use NeuronAI\Workflow\Streaming\Channel\RedisChannelReader;
 use NeuronAI\Workflow\Streaming\ProtocolEvent;
 use NeuronAI\Workflow\Streaming\SSEEncoder;
 use NeuronAI\Workflow\WorkflowEngine;
-use Redis;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Throwable;
 
@@ -79,23 +79,11 @@ class ChatBackgroundController extends Controller
 
         return response()->stream(function () use ($job, $threadId, $runId): void {
             try {
-                $redis = RedisStream::connect(readTimeout: 120);
-
-                // The job waits for the subscription below before running the agent, so no event is missed.
+                // The job is dispatched first: its channel holds the first event until the reader below is listening.
                 dispatch($job);
 
-                $redis->subscribe([RedisStream::channel($threadId, $runId)], function (Redis $redis, string $channel, string $payload): void {
-                    // Neuron wraps every protocol event in a {streamId, sequence, type, data} envelope.
-                    $envelope = json_decode($payload, true);
-
-                    if (in_array($envelope['type'], ['stream.completed', 'stream.interrupted', 'stream.failed'])) {
-                        $redis->unsubscribe([$channel]);
-
-                        return;
-                    }
-
-                    $this->send(SSEEncoder::frame(new ProtocolEvent($envelope['type'], $envelope['data'])));
-                });
+                (new RedisChannelReader(RedisStream::connect(), RedisStream::channel($threadId, $runId), timeout: 120))
+                    ->listen(fn (ProtocolEvent $event) => $this->send(SSEEncoder::frame($event)));
             } catch (Throwable $exception) {
                 report($exception);
 
